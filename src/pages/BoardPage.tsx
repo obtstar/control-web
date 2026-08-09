@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from 'primereact/button'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
 import { useRef } from 'react'
@@ -13,28 +14,35 @@ export function BoardPage() {
   const [loading, setLoading] = useState(true)
   const toast = useRef<Toast>(null)
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      setLoading(true)
-      const { data, error } = await api.GET('/tasks')
-      if (cancelled) return
-      if (error || !data) {
-        const msg = (error as { error?: string })?.error ?? '加载任务失败'
-        toast.current?.show({ severity: 'error', summary: '加载失败', detail: msg })
-        setTasks([])
-      } else {
-        setTasks(data as Task[])
-      }
-      setLoading(false)
+  const load = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await api.GET('/tasks')
+    if (error || !data) {
+      const msg = error?.error ?? '加载任务失败'
+      toast.current?.show({ severity: 'error', summary: '加载失败', detail: msg })
+      setTasks([])
+    } else {
+      setTasks(data)
     }
-    load()
-    return () => { cancelled = true }
+    setLoading(false)
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   return (
     <div>
-      <h2 className="text-xl mb-3">任务看板</h2>
+      <div className="flex align-items-center justify-content-between mb-3">
+        <h2 className="text-xl m-0">任务看板</h2>
+        <Button
+          label="刷新"
+          icon="pi pi-refresh"
+          outlined
+          onClick={() => void load()}
+          disabled={loading}
+        />
+      </div>
       <Toast ref={toast} />
       {loading && tasks.length === 0 ? (
         <div className="flex justify-content-center p-5">

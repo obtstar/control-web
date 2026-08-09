@@ -8,7 +8,8 @@ import { LoginPage } from '@/pages/LoginPage'
 const mockPost = vi.fn()
 vi.mock('@/api/client', () => ({
   default: { POST: (...args: any[]) => mockPost(...args) },
-  setAuthToken: vi.fn()
+  setAuthToken: vi.fn(),
+  UNAUTHORIZED_EVENT: 'control-web:unauthorized'
 }))
 
 describe('LoginPage', () => {

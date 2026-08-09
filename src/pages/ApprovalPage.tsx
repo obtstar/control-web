@@ -23,11 +23,11 @@ export function ApprovalPage() {
     setLoading(true)
     const { data, error } = await api.GET('/approvals/pending')
     if (error || !data) {
-      const msg = (error as { error?: string })?.error ?? '加载审批列表失败'
+      const msg = error?.error ?? '加载审批列表失败'
       toast.current?.show({ severity: 'error', summary: '加载失败', detail: msg })
       setItems([])
     } else {
-      setItems(data as PendingApproval[])
+      setItems(data)
     }
     setLoading(false)
   }
@@ -45,7 +45,7 @@ export function ApprovalPage() {
     })
     setSubmitting(false)
     if (error || !data) {
-      const msg = (error as { error?: string })?.error ?? '操作失败'
+      const msg = error?.error ?? '操作失败'
       toast.current?.show({ severity: 'error', summary: '审批失败', detail: msg })
     } else {
       toast.current?.show({ severity: 'success', summary: '审批成功', detail: `${action === 'approve' ? '通过' : '驳回'} ${selected.task_id}` })

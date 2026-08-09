@@ -1,9 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import api, { setAuthToken } from '@/api/client'
-import type { components } from '@/generated/api'
-
-type LoginResponse = components['schemas']['LoginResponse']
-type LoginRequest = components['schemas']['LoginRequest']
+import api, { setAuthToken, UNAUTHORIZED_EVENT } from '@/api/client'
 
 export interface AuthState {
   token: string | null
@@ -70,18 +66,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     setError(null)
     const { data, error: apiError } = await api.POST('/auth/login', {
-      body: { username, password } as LoginRequest
+      body: { username, password }
     })
-    if (apiError) {
-      const message = (apiError as { error?: string }).error ?? '登录失败'
+    if (apiError || !data) {
+      const message = apiError?.error ?? '登录失败'
       setError(message)
       throw new Error(message)
     }
-    const res = data as LoginResponse
     const next: StoredSession = {
-      token: res.token,
-      username: res.username,
-      role: res.role
+      token: data.token,
+      username: data.username,
+      role: data.role
     }
     setAuthToken(next.token)
     setSession(next)
@@ -93,6 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null)
     saveStoredSession(null)
   }, [])
+
+  // API 返回 401（会话失效）时自动登出；logout 幂等，未登录时收到事件无副作用。
+  // 登出后 ProtectedRoute 会因 isAuthenticated 变为 false 自动跳转 /login。
+  useEffect(() => {
+    window.addEventListener(UNAUTHORIZED_EVENT, logout)
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, logout)
+  }, [logout])
 
   const value = useMemo(
     () => ({

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -17,6 +17,15 @@ interface ApprovalDialogProps {
 export function ApprovalDialog({ visible, item, onHide, onSubmit, submitting }: ApprovalDialogProps) {
   const [comment, setComment] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  // 每次打开对话框时重置批注与错误：父组件提交成功后会编程式关闭
+  // （setVisible(false)），不触发 onHide，若不在打开时重置会残留上一条批注
+  useEffect(() => {
+    if (visible) {
+      setComment('')
+      setError(null)
+    }
+  }, [visible, item])
 
   if (!item) return null
 

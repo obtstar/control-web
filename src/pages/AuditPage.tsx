@@ -20,11 +20,11 @@ export function AuditPage() {
       const { data, error } = await api.GET('/audit')
       if (cancelled) return
       if (error || !data) {
-        const msg = (error as { error?: string })?.error ?? '加载审计日志失败'
+        const msg = error?.error ?? '加载审计日志失败'
         toast.current?.show({ severity: 'error', summary: '加载失败', detail: msg })
         setLogs([])
       } else {
-        setLogs(data as AuditLog[])
+        setLogs(data)
       }
       setLoading(false)
     }

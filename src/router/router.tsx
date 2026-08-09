@@ -20,6 +20,13 @@ function PublicRoute() {
   return <LoginPage />
 }
 
+function NotFoundRedirect() {
+  const { isAuthenticated, loading } = useAuth()
+  if (loading) return null
+  // 未知路径按登录态分流：已登录回工作台，未登录去登录页
+  return <Navigate to={isAuthenticated ? '/board' : '/login'} replace />
+}
+
 export const router = createBrowserRouter([
   {
     path: '/login',
@@ -35,5 +42,5 @@ export const router = createBrowserRouter([
       { path: 'audit', element: <AuditPage /> }
     ]
   },
-  { path: '*', element: <Navigate to="/login" replace /> }
+  { path: '*', element: <NotFoundRedirect /> }
 ])

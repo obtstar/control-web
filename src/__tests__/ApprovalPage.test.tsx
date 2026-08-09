@@ -79,4 +79,25 @@ describe('ApprovalPage', () => {
       )
     })
   })
+
+  it('clears comment when dialog reopened after programmatic close', async () => {
+    const secondItem = { ...sampleItems[0], task_id: 'TASK-002', title: 'MVP-2' }
+    ;(api.GET as Mock).mockResolvedValueOnce({ data: sampleItems, error: undefined })
+    ;(api.GET as Mock).mockResolvedValueOnce({ data: [secondItem], error: undefined })
+    ;(api.POST as Mock).mockResolvedValueOnce({
+      data: { task_id: 'TASK-001', stage: 'coding', status: 'pending' },
+      error: undefined
+    })
+    renderPage()
+    await waitFor(() => screen.getByRole('button', { name: '审批' }))
+    await userEvent.click(screen.getByRole('button', { name: '审批' }))
+    await userEvent.type(screen.getByLabelText('批注'), '上一条批注')
+    await userEvent.click(screen.getByRole('button', { name: '通过' }))
+    // 提交成功后父组件编程式关闭对话框（不触发 onHide），刷新出下一条
+    await waitFor(() => screen.getByText('TASK-002'))
+    await userEvent.click(screen.getByRole('button', { name: '审批' }))
+    await waitFor(() => {
+      expect(screen.getByLabelText('批注')).toHaveValue('')
+    })
+  })
 })

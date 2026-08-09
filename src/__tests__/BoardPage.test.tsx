@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { BoardPage } from '@/pages/BoardPage'
 
@@ -42,5 +43,33 @@ describe('BoardPage', () => {
     await waitFor(() => {
       expect(screen.getByText('服务异常')).toBeInTheDocument()
     })
+  })
+
+  it('reloads tasks when refresh button clicked', async () => {
+    const updated = [{ ...sampleTasks[0], title: 'B' }]
+    mockGet.mockResolvedValueOnce({ data: sampleTasks, error: undefined })
+    mockGet.mockResolvedValueOnce({ data: updated, error: undefined })
+    renderPage()
+    await waitFor(() => screen.getByText('A'))
+    await userEvent.click(screen.getByRole('button', { name: '刷新' }))
+    await waitFor(() => {
+      expect(screen.getByText('B')).toBeInTheDocument()
+    })
+    expect(mockGet).toHaveBeenCalledTimes(2)
+  })
+
+  it('disables refresh button while loading', async () => {
+    let resolveSecond!: (value: unknown) => void
+    mockGet.mockResolvedValueOnce({ data: sampleTasks, error: undefined })
+    mockGet.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveSecond = resolve })
+    )
+    renderPage()
+    await waitFor(() => screen.getByText('A'))
+    const btn = screen.getByRole('button', { name: '刷新' })
+    await userEvent.click(btn)
+    expect(btn).toBeDisabled()
+    resolveSecond({ data: sampleTasks, error: undefined })
+    await waitFor(() => expect(btn).not.toBeDisabled())
   })
 })
