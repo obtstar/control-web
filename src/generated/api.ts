@@ -115,7 +115,62 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        /**
+         * 创建任务
+         * @description 创建任务 = 在 tasks/ 下落一份 task.md（文档即任务），初始状态 pending、stage 为空。
+         *     任务 ID 由后端按 TASK-%03d 递增分配。
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateTaskRequest"];
+                };
+            };
+            responses: {
+                /** @description 创建成功 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateTaskResponse"];
+                    };
+                };
+                /** @description 请求格式错误或 title/body 缺失 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 未认证 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 服务器内部错误 */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -133,9 +188,9 @@ export interface paths {
         put?: never;
         /**
          * 任务动作
-         * @description 对指定任务执行动作。MVP 聚焦 approve/reject；
-         *     approve 推进到下一阶段，reject 按 pipeline on_reject 回退。
-         *     reject 必须附批注；后端会再次校验角色权限。
+         * @description 对指定任务执行动作：approve 推进到下一阶段，reject 按 pipeline on_reject 回退，
+         *     pause 暂停（最高运行时权限，任何角色可触发），resume 恢复（仅人执行）。
+         *     reject 必须附批注；approve/reject 后端会再次校验角色权限。
          */
         post: {
             parameters: {
@@ -360,10 +415,11 @@ export interface components {
             /** @description 当前阶段 */
             stage: string;
             /**
-             * @description 任务状态
+             * @description 任务状态。实现中不存在 merged 状态赋值点（merge 阶段终审为团队在
+             *     Git 平台合并，见 FINDING-003 另行跟踪），故契约不含 merged。
              * @enum {string}
              */
-            status: "pending" | "running" | "awaiting_approval" | "paused" | "merged" | "delivered";
+            status: "pending" | "running" | "awaiting_approval" | "paused" | "delivered";
             /** @description 文档权柄级别 */
             authority: string;
             /** @description 最近更新人（从 work_log 派生） */
@@ -374,12 +430,31 @@ export interface components {
              */
             updated_at: string;
         };
+        CreateTaskRequest: {
+            /** @description 任务标题（必填，去空白后非空） */
+            title: string;
+            /** @description 目标仓库键（可选，registry/repos.yaml 中的 key） */
+            repo_key?: string;
+            /** @description 领域 skill（可选，如 frontend-dev/backend-java） */
+            domain?: string;
+            /** @description 需求正文（L1，人写；必填，去空白后非空） */
+            body: string;
+        };
+        CreateTaskResponse: {
+            /** @description 分配的任务 ID，如 TASK-001 */
+            task_id: string;
+            /** @description 任务目录路径（task.md 所在目录） */
+            path: string;
+        };
         ActionRequest: {
             /**
-             * @description 审批动作
+             * @description 任务动作。approve 批准并推进到下一阶段，reject 按 pipeline on_reject 回退（必须附批注）；
+             *     pause 暂停——最高运行时权限，任何角色可触发，暂停期间禁止一切写操作；
+             *     resume 恢复——仅人执行，恢复后按当前 stage 重新执行。
+             *     advance 仅供后端内部自动流程使用，不对外暴露。
              * @enum {string}
              */
-            action: "approve" | "reject";
+            action: "approve" | "reject" | "pause" | "resume";
             /** @description 批注；reject 时必填 */
             comment?: string | null;
         };
