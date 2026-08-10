@@ -64,7 +64,9 @@ export function LoginPage() {
             placeholder="密码"
             feedback={false}
             toggleMask
+            className="w-full"
             inputClassName="w-full"
+            pt={{ iconField: { root: { className: 'w-full' } } }}
           />
         </div>
         <Button label="登录" type="submit" loading={submitting} />
