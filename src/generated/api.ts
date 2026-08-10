@@ -384,6 +384,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 问题一览
+         * @description 返回平台发现问题登记表，每次请求实时解析权威源
+         *     control-center/docs/FINDINGS.md 的 Markdown 表格（web 问题一览为派生视图，
+         *     不做缓存）。表头/分隔行与非 FINDING 开头的行被跳过。
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 问题列表 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Finding"][];
+                    };
+                };
+                /** @description 未认证 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 服务器内部错误（如 FINDINGS.md 读取失败） */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -508,6 +567,27 @@ export interface components {
              * @description 创建时间
              */
             created_at: string;
+        };
+        Finding: {
+            /** @description 问题 ID，如 FINDING-001 */
+            id: string;
+            /** @description 登记日期 */
+            date: string;
+            /** @description 来源（评审/核查轮次） */
+            source?: string;
+            /** @description 现象描述 */
+            phenomenon: string;
+            /** @description 证据（文件:行号等，可为空串） */
+            evidence?: string;
+            /** @description 影响 */
+            impact?: string;
+            /**
+             * @description 处理状态
+             * @enum {string}
+             */
+            status: "open" | "confirmed" | "fixed" | "wontfix";
+            /** @description 去向（修复提交或跟进位置，允许空串） */
+            target?: string;
         };
         Error: {
             /** @description 错误信息 */

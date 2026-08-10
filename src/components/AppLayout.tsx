@@ -10,7 +10,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const items = [
     { label: '任务看板', icon: 'pi pi-th-large', command: () => navigate('/board') },
     { label: '审批中心', icon: 'pi pi-check-circle', command: () => navigate('/approvals') },
-    { label: '审计日志', icon: 'pi pi-history', command: () => navigate('/audit') }
+    { label: '审计日志', icon: 'pi pi-history', command: () => navigate('/audit') },
+    { label: '问题', icon: 'pi pi-exclamation-triangle', command: () => navigate('/findings') }
   ]
 
   const end = (

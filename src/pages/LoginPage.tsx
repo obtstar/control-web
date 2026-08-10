@@ -52,6 +52,7 @@ export function LoginPage() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="用户名"
             autoFocus
+            className="w-full"
           />
         </div>
         <div className="flex flex-column gap-2">
@@ -63,6 +64,7 @@ export function LoginPage() {
             placeholder="密码"
             feedback={false}
             toggleMask
+            inputClassName="w-full"
           />
         </div>
         <Button label="登录" type="submit" loading={submitting} />
