@@ -6,7 +6,7 @@ import { BoardPage } from '@/pages/BoardPage'
 
 const mockGet = vi.fn()
 vi.mock('@/api/client', () => ({
-  default: { GET: (...args: any[]) => mockGet(...args) },
+  default: { GET: (...args: unknown[]) => mockGet(...args) },
   setAuthToken: vi.fn()
 }))
 
