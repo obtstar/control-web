@@ -11,7 +11,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { label: '任务看板', icon: 'pi pi-th-large', command: () => navigate('/board') },
     { label: '审批中心', icon: 'pi pi-check-circle', command: () => navigate('/approvals') },
     { label: '审计日志', icon: 'pi pi-history', command: () => navigate('/audit') },
-    { label: '问题', icon: 'pi pi-exclamation-triangle', command: () => navigate('/findings') }
+    { label: '问题', icon: 'pi pi-exclamation-triangle', command: () => navigate('/findings') },
+    { label: 'KB 检索', icon: 'pi pi-search', command: () => navigate('/kb') },
+    { label: 'API 文档', icon: 'pi pi-book', command: () => navigate('/api-docs') }
   ]
 
   const end = (

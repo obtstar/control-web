@@ -526,6 +526,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/kb/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * KB 检索
+         * @description 代理 PieKBS REST（GET {kb.endpoint}/api/search）的全文检索，web 为检索视图。
+         *     与 engine KB grounding 的 mode 门控无关：只要 kb.endpoint 非空即可用。
+         *     kb.endpoint 未配置（空）时 503；PieKBS 不可达、返回非 200 或响应解析失败时
+         *     502 并在 error 中带原因摘要。
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description 检索词（去空白后非空，否则 400） */
+                    q: string;
+                    /** @description 返回条数上限（默认 10；非正整数时 400） */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 命中列表（无命中返回空数组） */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["KBHit"][];
+                    };
+                };
+                /** @description q 为空或 limit 非法 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 未认证 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description KB 不可达或 PieKBS 报错/响应解析失败（error 带原因摘要） */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description kb.endpoint 未配置 */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/openapi.yaml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * OpenAPI 契约文件本体
+         * @description 自指端点：文档即实现。返回本服务实际实现的契约文件
+         *     docs/api/openapi.yaml 原文（text/yaml），供前端 API 文档页（Scalar）渲染。
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 契约文件原文 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/yaml": string;
+                    };
+                };
+                /** @description 未认证 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 契约文件读取失败 */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -688,6 +829,20 @@ export interface components {
             task_id: string;
             /** @description 受理后状态（merged，随后自动推进 deliver） */
             status: string;
+        };
+        KBHit: {
+            /** @description 文档 ID */
+            id: string;
+            /** @description 文档路径（KB 内相对路径） */
+            path?: string;
+            /** @description 文档标题 */
+            title: string;
+            /** @description 文档层（如 raw/wiki） */
+            layer?: string;
+            /** @description 文档类型（如 page/concept） */
+            kind?: string;
+            /** @description 命中摘要（可缺席） */
+            snippet?: string;
         };
         Error: {
             /** @description 错误信息 */

@@ -6,6 +6,8 @@ import { BoardPage } from '@/pages/BoardPage'
 import { ApprovalPage } from '@/pages/ApprovalPage'
 import { AuditPage } from '@/pages/AuditPage'
 import { FindingsPage } from '@/pages/FindingsPage'
+import { KBPage } from '@/pages/KBPage'
+import { ApiDocsPage } from '@/pages/ApiDocsPage'
 
 function ProtectedRoute() {
   const { isAuthenticated, loading } = useAuth()
@@ -41,7 +43,9 @@ export const router = createBrowserRouter([
       { path: 'board', element: <BoardPage /> },
       { path: 'approvals', element: <ApprovalPage /> },
       { path: 'audit', element: <AuditPage /> },
-      { path: 'findings', element: <FindingsPage /> }
+      { path: 'findings', element: <FindingsPage /> },
+      { path: 'kb', element: <KBPage /> },
+      { path: 'api-docs', element: <ApiDocsPage /> }
     ]
   },
   { path: '*', element: <NotFoundRedirect /> }
