@@ -269,6 +269,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/merge-event": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 团队 MR 终审合并事件回传
+         * @description merge 阶段（approval: team_mr_review）终审由团队员工在 Git 平台完成，
+         *     平台无合并按钮；合并后 Git 平台回传本 webhook，任务状态置 merged 并自动
+         *     推进 deliver。认证独立于 Bearer 会话：请求头 X-Webhook-Token 与服务端
+         *     server.webhook_secret（env CONTROL_WEBHOOK_SECRET 可覆盖）常量时间比较。
+         *     secret 未配置时端点未启用，一律 503。
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MergeEventRequest"];
+                };
+            };
+            responses: {
+                /** @description 合并事件已受理，状态置 merged 并推进 deliver */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MergeEventResponse"];
+                    };
+                };
+                /** @description 请求格式错误、缺 task_id 或 event 非 merged */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description X-Webhook-Token 缺失或与共享密钥不符 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 任务不存在或不在 merge 阶段 awaiting_approval 等待态 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description webhook 未启用（server.webhook_secret 未配置） */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/approvals/pending": {
         parameters: {
             query?: never;
@@ -474,11 +557,11 @@ export interface components {
             /** @description 当前阶段 */
             stage: string;
             /**
-             * @description 任务状态。实现中不存在 merged 状态赋值点（merge 阶段终审为团队在
-             *     Git 平台合并，见 FINDING-003 另行跟踪），故契约不含 merged。
+             * @description 任务状态。merged 为瞬态：merge 阶段终审由团队在 Git 平台合并后
+             *     经 POST /webhooks/merge-event 回传置位，随后自动推进 deliver。
              * @enum {string}
              */
-            status: "pending" | "running" | "awaiting_approval" | "paused" | "delivered";
+            status: "pending" | "running" | "awaiting_approval" | "paused" | "merged" | "delivered";
             /** @description 文档权柄级别 */
             authority: string;
             /** @description 最近更新人（从 work_log 派生） */
@@ -588,6 +671,23 @@ export interface components {
             status: "open" | "confirmed" | "fixed" | "wontfix";
             /** @description 去向（修复提交或跟进位置，允许空串） */
             target?: string;
+        };
+        MergeEventRequest: {
+            /** @description 任务 ID，如 TASK-001（必填） */
+            task_id: string;
+            /**
+             * @description 事件类型，仅支持 merged（必填）
+             * @enum {string}
+             */
+            event: "merged";
+            /** @description 合并详情，如 "MR !123 by @teammate" */
+            detail?: string | null;
+        };
+        MergeEventResponse: {
+            /** @description 任务 ID */
+            task_id: string;
+            /** @description 受理后状态（merged，随后自动推进 deliver） */
+            status: string;
         };
         Error: {
             /** @description 错误信息 */
