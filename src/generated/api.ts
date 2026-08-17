@@ -712,6 +712,8 @@ export interface components {
              * @description 最近更新时间
              */
             updated_at: string;
+            /** @description 任务目录绝对路径（看板索引派生字段，FINDING-039 补登记） */
+            readonly path?: string;
         };
         CreateTaskRequest: {
             /** @description 任务标题（必填，去空白后非空） */
