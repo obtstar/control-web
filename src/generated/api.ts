@@ -720,7 +720,7 @@ export interface components {
             title: string;
             /** @description 目标仓库键（可选，registry/repos.yaml 中的 key） */
             repo_key?: string;
-            /** @description 领域 skill（可选，如 frontend-dev/backend-java） */
+            /** @description 领域 skill（可选，如 frontend-dev/backend-go） */
             domain?: string;
             /** @description 需求正文（L1，人写；必填，去空白后非空） */
             body: string;
