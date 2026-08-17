@@ -18,6 +18,22 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // FINDING-021：重型 vendor 分包（Scalar 由路由懒加载自动分离）。
+        // 函数式按模块路径归组：保持 tree-shake 后的实际引入集，
+        // 避免包入口全量打包拖入可选依赖（primereact.all → chart.js）
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('/react-dom/') || id.includes('/react-router') || id.includes('/react/'))
+            return 'react'
+          if (id.includes('/primereact/') || id.includes('/primeicons/'))
+            return 'primereact'
+        }
+      }
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',
