@@ -281,8 +281,9 @@ export interface paths {
         /**
          * 团队 MR 终审合并事件回传
          * @description merge 阶段（approval: team_mr_review）终审由团队员工在 Git 平台完成，
-         *     平台无合并按钮；合并后 Git 平台回传本 webhook，任务状态置 merged 并自动
-         *     推进 deliver。认证独立于 Bearer 会话：请求头 X-Webhook-Token 与服务端
+         *     平台无合并按钮；合并后 Git 平台回传本 webhook，任务状态置 merged 并停留
+         *     待交付（FINDING-029），由人工 action=deliver 确认后推进 deliver。
+         *     认证独立于 Bearer 会话：请求头 X-Webhook-Token 与服务端
          *     server.webhook_secret（env CONTROL_WEBHOOK_SECRET 可覆盖）常量时间比较。
          *     secret 未配置时端点未启用，一律 503。
          */
@@ -299,7 +300,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description 合并事件已受理，状态置 merged 并推进 deliver */
+                /** @description 合并事件已受理，状态置 merged 停留待交付（FINDING-029） */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -698,8 +699,10 @@ export interface components {
             /** @description 当前阶段 */
             stage: string;
             /**
-             * @description 任务状态。merged 为瞬态：merge 阶段终审由团队在 Git 平台合并后
-             *     经 POST /webhooks/merge-event 回传置位，随后自动推进 deliver。
+             * @description 任务状态。merged 为稳定态（FINDING-029）：merge 阶段终审由团队在 Git
+             *     平台合并后经 POST /webhooks/merge-event 回传置位，任务停留 merged
+             *     （已合并待交付，看板可见），由人工经 POST /tasks/{id}/action
+             *     （action=deliver）确认后推进 deliver。
              * @enum {string}
              */
             status: "pending" | "running" | "awaiting_approval" | "paused" | "merged" | "delivered";
@@ -718,7 +721,11 @@ export interface components {
         CreateTaskRequest: {
             /** @description 任务标题（必填，去空白后非空） */
             title: string;
-            /** @description 目标仓库键（可选，registry/repos.yaml 中的 key） */
+            /**
+             * @description 目标仓库键（可选，registry/repos.yaml 中的 key）。提供时须已登记
+             *     且未 disabled，否则 400（FINDING-019/046，14.2）；留空表示未分配
+             *     仓库的草稿任务。
+             */
             repo_key?: string;
             /** @description 领域 skill（可选，如 frontend-dev/backend-go） */
             domain?: string;
@@ -735,11 +742,13 @@ export interface components {
             /**
              * @description 任务动作。approve 批准并推进到下一阶段，reject 按 pipeline on_reject 回退（必须附批注）；
              *     pause 暂停——最高运行时权限，任何角色可触发，暂停期间禁止一切写操作；
-             *     resume 恢复——仅人执行，恢复后按当前 stage 重新执行。
+             *     resume 恢复——仅人执行，恢复后按当前 stage 重新执行；
+             *     deliver 交付确认（FINDING-029）——仅 merge 阶段 merged 状态可触发，
+             *     确认后进入 deliver 阶段（auto，agent 自动走完即 delivered）。
              *     advance 仅供后端内部自动流程使用，不对外暴露。
              * @enum {string}
              */
-            action: "approve" | "reject" | "pause" | "resume";
+            action: "approve" | "reject" | "pause" | "resume" | "deliver";
             /** @description 批注；reject 时必填 */
             comment?: string | null;
         };
@@ -829,7 +838,7 @@ export interface components {
         MergeEventResponse: {
             /** @description 任务 ID */
             task_id: string;
-            /** @description 受理后状态（merged，随后自动推进 deliver） */
+            /** @description 受理后状态（merged，停留待人工 action=deliver 确认，FINDING-029） */
             status: string;
         };
         KBHit: {

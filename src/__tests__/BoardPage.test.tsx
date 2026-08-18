@@ -5,8 +5,12 @@ import { MemoryRouter } from 'react-router-dom'
 import { BoardPage } from '@/pages/BoardPage'
 
 const mockGet = vi.fn()
+const mockPost = vi.fn()
 vi.mock('@/api/client', () => ({
-  default: { GET: (...args: unknown[]) => mockGet(...args) },
+  default: {
+    GET: (...args: unknown[]) => mockGet(...args),
+    POST: (...args: unknown[]) => mockPost(...args)
+  },
   setAuthToken: vi.fn()
 }))
 
@@ -71,5 +75,31 @@ describe('BoardPage', () => {
     expect(btn).toBeDisabled()
     resolveSecond({ data: sampleTasks, error: undefined })
     await waitFor(() => expect(btn).not.toBeDisabled())
+  })
+
+  // FINDING-029：merged（已合并待交付）行显示交付按钮，确认后调 action=deliver 并重载
+  it('merged row shows deliver button and delivers on confirm', async () => {
+    const merged = [{ ...sampleTasks[0], stage: 'merge', status: 'merged' }]
+    mockGet.mockResolvedValue({ data: merged, error: undefined })
+    mockPost.mockResolvedValueOnce({ data: { task_id: 'TASK-001', stage: 'deliver', status: 'running' }, error: undefined })
+    renderPage()
+    const deliverBtn = await screen.findByRole('button', { name: '交付' })
+    await userEvent.click(deliverBtn)
+    // 确认对话框：确认后才真正调用
+    await userEvent.click(await screen.findByRole('button', { name: '确认交付' }))
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith('/tasks/{id}/action', {
+        params: { path: { id: 'TASK-001' } },
+        body: { action: 'deliver' }
+      })
+    })
+  })
+
+  // FINDING-029：非 merged 行不显示交付按钮
+  it('non-merged rows hide deliver button', async () => {
+    mockGet.mockResolvedValueOnce({ data: sampleTasks, error: undefined })
+    renderPage()
+    await waitFor(() => screen.getByText('TASK-001'))
+    expect(screen.queryByRole('button', { name: '交付' })).not.toBeInTheDocument()
   })
 })
