@@ -11,9 +11,11 @@ interface TaskTableProps {
   loading?: boolean
   // onDeliver 交付确认入口（FINDING-029）：仅 merged（已合并待交付）行显示
   onDeliver?: (task: Task) => void
+  // onAiAssist AI 协助入口（TASK-008 Phase 2 / TASK-000016）：跳 /ai 带任务上下文
+  onAiAssist?: (taskId: string) => void
 }
 
-export function TaskTable({ tasks, loading, onDeliver }: TaskTableProps) {
+export function TaskTable({ tasks, loading, onDeliver, onAiAssist }: TaskTableProps) {
   return (
     <DataTable value={tasks} loading={loading} paginator rows={20} filterDisplay="row">
       <Column field="task_id" header="任务 ID" sortable filter />
@@ -31,6 +33,21 @@ export function TaskTable({ tasks, loading, onDeliver }: TaskTableProps) {
               <Button label="交付" size="small" onClick={() => onDeliver(row)} />
             ) : null
           }
+        />
+      )}
+      {onAiAssist && (
+        <Column
+          header="AI"
+          style={{ width: '70px' }}
+          body={(row: Task) => (
+            <Button
+              icon="pi pi-sparkles"
+              size="small"
+              text
+              tooltip="AI 协助"
+              onClick={() => onAiAssist(row.task_id)}
+            />
+          )}
         />
       )}
     </DataTable>

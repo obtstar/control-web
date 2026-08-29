@@ -38,6 +38,22 @@ export function ApprovalDialog({ visible, item, onHide, onSubmit, submitting }: 
     onSubmit(action, comment.trim())
   }
 
+  const aiSuggestion = (
+    <div className="mb-3 flex align-items-center gap-2 p-2 surface-100 border-round">
+      <i className="pi pi-sparkles text-primary" />
+      <span className="text-sm text-color-secondary">
+        AI 建议：点击
+        <a
+          className="mx-1 text-primary cursor-pointer"
+          onClick={() => window.open(`/ai#task=${item.task_id}`, '_blank')}
+        >
+          查看任务上下文
+        </a>
+        获取 AI 协助（/ai AI 助手面板）
+      </span>
+    </div>
+  )
+
   const footer = (
     <div className="flex justify-content-end gap-2">
       <Button label="取消" icon="pi pi-times" outlined onClick={onHide} disabled={submitting} />
@@ -85,6 +101,7 @@ export function ApprovalDialog({ visible, item, onHide, onSubmit, submitting }: 
             <strong>产物：</strong>{item.artifact}
           </div>
         )}
+        {aiSuggestion}
         <div className="flex flex-column gap-2">
           <label htmlFor="comment">批注</label>
           <InputTextarea
