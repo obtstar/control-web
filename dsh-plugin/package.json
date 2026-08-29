@@ -1,0 +1,10 @@
+{
+  "name": "control-web-dsh-plugin",
+  "description": "Control platform integration plugin for DSH",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "files": ["src"],
+  "license": "MIT"
+}
