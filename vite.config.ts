@@ -18,6 +18,17 @@ export default defineConfig({
       }
     }
   },
+  preview: {
+    port: 4173,
+    proxy: {
+      // 生产/preview 形态（systemd 托管 control-web.service）：客户端 baseUrl 为
+      // 相对路径 /api，preview 模式须显式转发 control-api，否则看板/审批全 404
+      '/api': {
+        target: 'http://127.0.0.1:8765',
+        changeOrigin: true
+      }
+    }
+  },
   build: {
     rollupOptions: {
       output: {
