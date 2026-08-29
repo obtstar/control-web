@@ -226,7 +226,10 @@ export function DSHIntegrationPanel({
           src={dshUrl}
           style={{
             width: '100%',
-            height: '100%',
+            // AppLayout main 无确定高度（min-h-screen 内容自适应）→ flex 高度链断裂，
+            // height:100% 无效（塌陷）；改用视口高度（导航 64 + padding 32 + 页头 50 + Tab 头 48 ≈ 200，余量缓冲）
+            height: 'calc(100vh - 260px)',
+            minHeight: '500px',
             border: 'none',
             borderRadius: '8px'
           }}
