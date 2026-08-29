@@ -118,7 +118,7 @@ export interface paths {
         /**
          * 创建任务
          * @description 创建任务 = 在 tasks/ 下落一份 task.md（文档即任务），初始状态 pending、stage 为空。
-         *     任务 ID 由后端按 TASK-%03d 递增分配。
+         *     任务 ID 由后端按 TASK-%06d 递增分配（存量 TASK-001~010 保持 3 位兼容解析）。
          */
         post: {
             parameters: {
@@ -328,6 +328,102 @@ export interface paths {
                     };
                 };
                 /** @description 任务不存在或不在 merge 阶段 awaiting_approval 等待态 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description webhook 未启用（server.webhook_secret 未配置） */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/advance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * DSH 会话阶段完成回传
+         * @description C1 执行层迁移：任务阶段由 DSH 会话执行（agent.enabled=false 时 control-api
+         *     不拉起 pi 执行器），阶段产物落任务目录后经本通道声明阶段完成，engine.Advance
+         *     置 Stage=First()（若空）、末阶段→delivered、需审批阶段→awaiting_approval 并入
+         *     审批队列、auto 阶段→直接进入下一阶段。
+         *     状态守卫：仅 pending/running 可 advance；paused（暂停最高优先级，禁一切写）、
+         *     awaiting_approval（重复推进）、delivered → 409。
+         *     认证独立于 Bearer 会话：请求头 X-Webhook-Token 与服务端 server.webhook_secret
+         *     （env CONTROL_WEBHOOK_SECRET 可覆盖）常量时间比较；secret 未配置时端点未启用，
+         *     一律 503（与 /webhooks/merge-event 同密钥同策略，FINDING-003）。
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdvanceEventRequest"];
+                };
+            };
+            responses: {
+                /** @description 阶段完成已受理，任务进入审批闸（awaiting_approval） */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdvanceEventResponse"];
+                    };
+                };
+                /** @description 请求格式错误或缺 task_id */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description X-Webhook-Token 缺失或与共享密钥不符 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 任务不存在 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description 任务状态不可 advance（仅 pending/running）或 engine 拒绝推进 */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -668,6 +764,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/events/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SSE 任务事件流（TASK-007 实时通知）
+         * @description 服务端单向推送任务状态变更事件（SSE，text/event-stream）。
+         *     事件格式：event: task / data: {"task_id","action","ts"}。
+         *     前端（EventSource）收到任意事件后重拉权威列表（/api/tasks、/api/approvals/pending）。
+         *     EventSource 无法自定义 Authorization 头，鉴权走 query token（与 Bearer 同源会话校验，
+         *     本地单用户内网可接受，见 events.go）；心跳注释行每 15s 一条防代理断连。
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description 会话 token（登录返回；EventSource 无法带 Header 故走 query） */
+                    token: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description SSE 事件流（持续推送，连接保持） */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": string;
+                    };
+                };
+                /** @description token 无效 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -690,7 +841,7 @@ export interface components {
             role: "customer" | "designer" | "tester" | "team" | "admin";
         };
         Task: {
-            /** @description 任务 ID，如 TASK-001 */
+            /** @description 任务 ID，如 TASK-000011 */
             task_id: string;
             /** @description 任务标题 */
             title: string;
@@ -708,6 +859,8 @@ export interface components {
             status: "pending" | "running" | "awaiting_approval" | "paused" | "merged" | "delivered";
             /** @description 文档权柄级别 */
             authority: string;
+            /** @description 归档标记（TASK-000020）：delivered 后可归档，归档任务默认不在看板（?archived=all 查全部） */
+            archived?: boolean;
             /** @description 最近更新人（从 work_log 派生） */
             updated_by?: string | null;
             /**
@@ -733,7 +886,7 @@ export interface components {
             body: string;
         };
         CreateTaskResponse: {
-            /** @description 分配的任务 ID，如 TASK-001 */
+            /** @description 分配的任务 ID，如 TASK-000011 */
             task_id: string;
             /** @description 任务目录路径（task.md 所在目录） */
             path: string;
@@ -748,7 +901,7 @@ export interface components {
              *     advance 仅供后端内部自动流程使用，不对外暴露。
              * @enum {string}
              */
-            action: "approve" | "reject" | "pause" | "resume" | "deliver";
+            action: "approve" | "reject" | "pause" | "resume" | "deliver" | "archive";
             /** @description 批注；reject 时必填 */
             comment?: string | null;
         };
@@ -825,7 +978,7 @@ export interface components {
             target?: string;
         };
         MergeEventRequest: {
-            /** @description 任务 ID，如 TASK-001（必填） */
+            /** @description 任务 ID，如 TASK-000011（必填） */
             task_id: string;
             /**
              * @description 事件类型，仅支持 merged（必填）
@@ -839,6 +992,20 @@ export interface components {
             /** @description 任务 ID */
             task_id: string;
             /** @description 受理后状态（merged，停留待人工 action=deliver 确认，FINDING-029） */
+            status: string;
+        };
+        AdvanceEventRequest: {
+            /** @description 任务 ID，如 TASK-000013（必填） */
+            task_id: string;
+            /** @description 阶段产物说明（可选），如 "report-design.md"，记入 work_log detail */
+            artifact?: string | null;
+        };
+        AdvanceEventResponse: {
+            /** @description 任务 ID */
+            task_id: string;
+            /** @description 受理后阶段（advance 后所在阶段） */
+            stage: string;
+            /** @description 受理后状态（需审批阶段为 awaiting_approval；auto 阶段为下一阶段 running） */
             status: string;
         };
         KBHit: {

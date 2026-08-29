@@ -15,6 +15,8 @@ interface TaskTableProps {
   onDeliver?: (task: Task) => void
   // onAiAssist AI 协助入口（TASK-008 Phase 2 / TASK-000016）：跳 /ai 带任务上下文
   onAiAssist?: (taskId: string) => void
+  // onArchive 归档入口（TASK-000020）：delivered 任务归档，归档后从活跃看板移除
+  onArchive?: (task: Task) => void
 }
 
 type FilterKey = 'repo_key' | 'stage' | 'status' | 'updated_by'
@@ -27,7 +29,7 @@ function useUniqueValues(tasks: Task[], key: FilterKey): string[] {
   )
 }
 
-export function TaskTable({ tasks, loading, onDeliver, onAiAssist }: TaskTableProps) {
+export function TaskTable({ tasks, loading, onDeliver, onAiAssist, onArchive }: TaskTableProps) {
   const repoOptions = useUniqueValues(tasks, 'repo_key')
   const stageOptions = useUniqueValues(tasks, 'stage')
   const statusOptions = useUniqueValues(tasks, 'status')
@@ -54,14 +56,19 @@ export function TaskTable({ tasks, loading, onDeliver, onAiAssist }: TaskTablePr
       <Column field="status" header="状态" body={(row: Task) => <StatusTag status={row.status} />} sortable filter filterMatchMode="equals" filterElement={(o) => dropdownFilter(o, statusOptions)} />
       <Column field="updated_by" header="更新人" sortable filter filterMatchMode="equals" filterElement={(o) => dropdownFilter(o, updatedByOptions)} />
       <Column field="updated_at" header="更新时间" sortable />
-      {onDeliver && (
+      {(onDeliver || onArchive) && (
         <Column
           header="操作"
-          body={(row: Task) =>
-            row.status === 'merged' ? (
-              <Button label="交付" size="small" onClick={() => onDeliver(row)} />
-            ) : null
-          }
+          body={(row: Task) => (
+            <div className="flex gap-2">
+              {row.status === 'merged' && onDeliver && (
+                <Button label="交付" size="small" onClick={() => onDeliver(row)} />
+              )}
+              {row.status === 'delivered' && onArchive && (
+                <Button label="归档" size="small" text severity="secondary" onClick={() => onArchive(row)} />
+              )}
+            </div>
+          )}
         />
       )}
       {onAiAssist && (

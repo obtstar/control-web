@@ -44,6 +44,20 @@ export function BoardPage() {
     reloadTimer.current = setTimeout(() => void load(), 500)
   })
 
+  // 归档（TASK-000020）：delivered → archive，从活跃看板移除
+  const handleArchive = async (task: Task) => {
+    const { data, error } = await api.POST('/tasks/{id}/action', {
+      params: { path: { id: task.task_id } },
+      body: { action: 'archive' }
+    })
+    if (error || !data) {
+      toast.current?.show({ severity: 'error', summary: '归档失败', detail: error?.error ?? '操作失败' })
+      return
+    }
+    toast.current?.show({ severity: 'success', summary: '已归档', detail: `${task.task_id} 已从活跃看板移除` })
+    void load()
+  }
+
   // 交付确认（FINDING-029）：merged → deliver，action 契约见 openapi.yaml ActionRequest
   const handleDeliver = async () => {
     if (!deliverTarget) return
@@ -96,6 +110,7 @@ export function BoardPage() {
           loading={loading}
           onDeliver={setDeliverTarget}
           onAiAssist={(taskId) => navigate('/ai', { state: { selectedTaskId: taskId } })}
+          onArchive={handleArchive}
         />
       )}
     </div>
