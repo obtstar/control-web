@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { TabView, TabPanel } from 'primereact/tabview'
 import { Card } from 'primereact/card'
 import { Message } from 'primereact/message'
-import { DSHIntegrationPanel, DSHSettingsPanel } from '@/components/DSHIntegrationPanel'
+import { DSHIntegrationPanel } from '@/components/DSHIntegrationPanel'
 import { TaskContextPanel, type Task } from '@/components/TaskContextPanel'
 
 /**
@@ -80,14 +80,6 @@ export function AIPage() {
                   taskContext={taskContext}
                 />
               </div>
-            </TabPanel>
-
-            {/* Tab 2: DSH 设置 */}
-            <TabPanel
-              header="DSH 设置"
-              leftIcon="pi pi-cog mr-2"
-            >
-              <DSHSettingsPanel />
             </TabPanel>
           </TabView>
         </div>

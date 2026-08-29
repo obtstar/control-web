@@ -250,5 +250,3 @@ export function DSHIntegrationPanel({
   )
 }
 
-// DSHSettingsPanel 已拆分至独立文件（≤300 行红线）；re-export 保持 AIPage 引用兼容
-export { DSHSettingsPanel } from './DSHSettingsPanel'
