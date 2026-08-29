@@ -17,12 +17,15 @@ export function BoardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [deliverTarget, setDeliverTarget] = useState<Task | null>(null)
+  const [showArchived, setShowArchived] = useState(false)
   const [delivering, setDelivering] = useState(false)
   const toast = useRef<Toast>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await api.GET('/tasks')
+    const { data, error } = await api.GET('/tasks', {
+      params: { query: showArchived ? { archived: 'all' } : {} }
+    })
     if (error || !data) {
       const msg = error?.error ?? '加载任务失败'
       toast.current?.show({ severity: 'error', summary: '加载失败', detail: msg })
@@ -31,7 +34,7 @@ export function BoardPage() {
       setTasks(data)
     }
     setLoading(false)
-  }, [])
+  }, [showArchived])
 
   useEffect(() => {
     void load()
@@ -81,13 +84,25 @@ export function BoardPage() {
     <div>
       <div className="flex align-items-center justify-content-between mb-3">
         <h2 className="text-xl m-0">任务看板</h2>
-        <Button
-          label="刷新"
-          icon="pi pi-refresh"
-          outlined
-          onClick={() => void load()}
-          disabled={loading}
-        />
+        <div className="flex gap-2">
+          <Button
+            label={showArchived ? '活跃' : '归档'}
+            icon={showArchived ? 'pi pi-list' : 'pi pi-archive'}
+            outlined
+            onClick={() => {
+              setShowArchived(!showArchived)
+              void load()
+            }}
+            disabled={loading}
+          />
+          <Button
+            label="刷新"
+            icon="pi pi-refresh"
+            outlined
+            onClick={() => void load()}
+            disabled={loading}
+          />
+        </div>
       </div>
       <Toast ref={toast} />
       <ConfirmDialog

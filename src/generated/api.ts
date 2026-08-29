@@ -74,11 +74,14 @@ export interface paths {
         };
         /**
          * 任务列表
-         * @description 返回所有任务索引，按 updated_at 倒序。
+         * @description 返回所有任务索引，按 updated_at 倒序。默认仅活跃（不含归档）；?archived=all 含归档（TASK-000020）。
          */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description all=含归档任务（默认仅活跃） */
+                    archived?: "all";
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
