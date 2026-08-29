@@ -7,6 +7,7 @@ import { Toast } from 'primereact/toast'
 import { useRef } from 'react'
 import api from '@/api/client'
 import { ApprovalDialog } from '@/components/ApprovalDialog'
+import { useTaskEvents } from '@/hooks/useTaskEvents'
 import type { components } from '@/generated/api'
 
 type PendingApproval = components['schemas']['PendingApproval']
@@ -35,6 +36,13 @@ export function ApprovalPage() {
   useEffect(() => {
     loadItems()
   }, [])
+
+  // TASK-007 实时通知：状态变更事件 → 防抖重拉审批列表
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useTaskEvents(() => {
+    if (reloadTimer.current) clearTimeout(reloadTimer.current)
+    reloadTimer.current = setTimeout(() => void loadItems(), 500)
+  })
 
   const handleSubmit = async (action: 'approve' | 'reject', comment: string) => {
     if (!selected) return

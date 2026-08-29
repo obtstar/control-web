@@ -6,6 +6,7 @@ import { ConfirmDialog } from 'primereact/confirmdialog'
 import { useRef } from 'react'
 import api from '@/api/client'
 import { TaskTable } from '@/components/TaskTable'
+import { useTaskEvents } from '@/hooks/useTaskEvents'
 import type { components } from '@/generated/api'
 
 type Task = components['schemas']['Task']
@@ -33,6 +34,13 @@ export function BoardPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  // TASK-007 实时通知：任务状态变更事件 → 防抖重拉看板
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useTaskEvents(() => {
+    if (reloadTimer.current) clearTimeout(reloadTimer.current)
+    reloadTimer.current = setTimeout(() => void load(), 500)
+  })
 
   // 交付确认（FINDING-029）：merged → deliver，action 契约见 openapi.yaml ActionRequest
   const handleDeliver = async () => {
