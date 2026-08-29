@@ -81,7 +81,7 @@ export function BoardPage() {
           <ProgressSpinner />
         </div>
       ) : (
-        <TaskTable tasks={tasks} loading={loading} onDeliver={setDeliverTarget} showAIAssist />
+        <TaskTable tasks={tasks} loading={loading} onDeliver={setDeliverTarget} />
       )}
     </div>
   )
