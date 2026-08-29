@@ -1,6 +1,8 @@
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { Button } from 'primereact/button'
+import { Dropdown } from 'primereact/dropdown'
+import { useMemo } from 'react'
 import { StatusTag } from './StatusTag'
 import type { components } from '@/generated/api'
 
@@ -15,15 +17,42 @@ interface TaskTableProps {
   onAiAssist?: (taskId: string) => void
 }
 
+type FilterKey = 'repo_key' | 'stage' | 'status' | 'updated_by'
+
+// 唯一值列表（去重排序，供下拉筛选）
+function useUniqueValues(tasks: Task[], key: FilterKey): string[] {
+  return useMemo(
+    () => [...new Set(tasks.map((t) => String(t[key] ?? '')).filter(Boolean))].sort(),
+    [tasks, key]
+  )
+}
+
 export function TaskTable({ tasks, loading, onDeliver, onAiAssist }: TaskTableProps) {
+  const repoOptions = useUniqueValues(tasks, 'repo_key')
+  const stageOptions = useUniqueValues(tasks, 'stage')
+  const statusOptions = useUniqueValues(tasks, 'status')
+  const updatedByOptions = useUniqueValues(tasks, 'updated_by')
+
+  // 下拉筛选组件（精确匹配 + 清空）
+  const dropdownFilter = (options: { value: unknown; filterApplyCallback: (v: unknown) => void }, values: string[]) => (
+    <Dropdown
+      value={options.value as string | null}
+      options={values}
+      onChange={(e) => options.filterApplyCallback(e.value)}
+      placeholder="全部"
+      showClear
+      className="w-full"
+    />
+  )
+
   return (
     <DataTable value={tasks} loading={loading} paginator rows={20} filterDisplay="row">
       <Column field="task_id" header="任务 ID" sortable filter />
       <Column field="title" header="标题" sortable filter />
-      <Column field="repo_key" header="仓库" sortable filter />
-      <Column field="stage" header="阶段" sortable filter />
-      <Column field="status" header="状态" body={(row: Task) => <StatusTag status={row.status} />} sortable filter />
-      <Column field="updated_by" header="更新人" sortable filter />
+      <Column field="repo_key" header="仓库" sortable filter filterMatchMode="equals" filterElement={(o) => dropdownFilter(o, repoOptions)} />
+      <Column field="stage" header="阶段" sortable filter filterMatchMode="equals" filterElement={(o) => dropdownFilter(o, stageOptions)} />
+      <Column field="status" header="状态" body={(row: Task) => <StatusTag status={row.status} />} sortable filter filterMatchMode="equals" filterElement={(o) => dropdownFilter(o, statusOptions)} />
+      <Column field="updated_by" header="更新人" sortable filter filterMatchMode="equals" filterElement={(o) => dropdownFilter(o, updatedByOptions)} />
       <Column field="updated_at" header="更新时间" sortable />
       {onDeliver && (
         <Column
