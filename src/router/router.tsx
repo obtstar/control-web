@@ -6,7 +6,6 @@ import { ApprovalPage } from '@/pages/ApprovalPage'
 import { AuditPage } from '@/pages/AuditPage'
 import { FindingsPage } from '@/pages/FindingsPage'
 import { KBPage } from '@/pages/KBPage'
-import { AIPage } from '@/pages/AIPage'
 
 export const router = createBrowserRouter([
   {
@@ -23,7 +22,6 @@ export const router = createBrowserRouter([
       { path: 'audit', element: <AuditPage /> },
       { path: 'findings', element: <FindingsPage /> },
       { path: 'kb', element: <KBPage /> },
-      { path: 'ai', element: <AIPage /> },
       { path: 'api-docs', element: <ApiDocsElement /> }
     ]
   },

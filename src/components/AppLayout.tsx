@@ -13,7 +13,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { label: '审计日志', icon: 'pi pi-history', command: () => navigate('/audit') },
     { label: '问题', icon: 'pi pi-exclamation-triangle', command: () => navigate('/findings') },
     { label: 'KB 检索', icon: 'pi pi-search', command: () => navigate('/kb') },
-    { label: 'AI 助手', icon: 'pi pi-sparkles', command: () => navigate('/ai') },
     { label: 'API 文档', icon: 'pi pi-book', command: () => navigate('/api-docs') }
   ]
 

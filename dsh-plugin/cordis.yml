@@ -1,3 +1,0 @@
-- insert:
-    - id: control-platform
-      name: '/home/dev/control-web/dsh-plugin/src/index.ts'

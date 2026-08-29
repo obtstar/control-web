@@ -1,9 +1,4 @@
 allowBuilds:
-  '@deepseek-ai/dsh-subprocess-local': false
-  '@google/genai': false
   esbuild: false
-  koffi: false
-  node-pty: false
-  protobufjs: false
   # vue-demi 的 postinstall 只用于 Vue 项目切换模块入口，本仓为 React，跳过其构建脚本
   vue-demi: false
