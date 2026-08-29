@@ -4,6 +4,7 @@ import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
 import { ConfirmDialog } from 'primereact/confirmdialog'
 import { useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '@/api/client'
 import { TaskTable } from '@/components/TaskTable'
 import { useTaskEvents } from '@/hooks/useTaskEvents'
@@ -12,6 +13,7 @@ import type { components } from '@/generated/api'
 type Task = components['schemas']['Task']
 
 export function BoardPage() {
+  const navigate = useNavigate()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [deliverTarget, setDeliverTarget] = useState<Task | null>(null)
@@ -89,7 +91,12 @@ export function BoardPage() {
           <ProgressSpinner />
         </div>
       ) : (
-        <TaskTable tasks={tasks} loading={loading} onDeliver={setDeliverTarget} />
+        <TaskTable
+          tasks={tasks}
+          loading={loading}
+          onDeliver={setDeliverTarget}
+          onAiAssist={(taskId) => navigate('/ai', { state: { selectedTaskId: taskId } })}
+        />
       )}
     </div>
   )
